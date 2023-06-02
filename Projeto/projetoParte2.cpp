@@ -1,6 +1,6 @@
 /****************
 
-LAED1 - Projeto (Parte I) - Busca por padrão em sequência
+LAED1 - Projeto (Parte II) - Estimativa do formato da pista
 
 Alunos(as):
 Lucas Andrade Brandão
@@ -167,7 +167,7 @@ int qntRepeticao(TipoApontador aux)
 1 3 2 3 1
 0 255 128 255 0
 */
-void mapeamento(TipoLista Lista, TipoLista result)
+void    mapeamento(TipoLista Lista, TipoLista result)
 {
     int repeticao, posGeral = 0;
     TipoApontador Aux;
@@ -253,13 +253,14 @@ int main(int argc, char *argv[])
     TipoLista lista;
     FLVazia(&lista);
 
-    int k = 2, numElementos = 0;
-    fscanf(fp, "%d ", &numElementos);
+    int linhas = 2, numElementos = 0;
+    fscanf(fp, "%d ", &linhas);
+    
 
-    // criacao da lista, sera usada somente o veclista[0]
-    TipoLista *vecListas = (TipoLista *)malloc(k * sizeof(TipoLista));
+    // criacao da lista, aloca o dobro para fazer a a lista de segmentos tipados 
+    TipoLista *vecListas = (TipoLista *)malloc(((linhas * 2)+ 1) * sizeof(TipoLista));
 
-    for (int i = 0; i < k; i++)
+    for (int i = 0; i < linhas; i++)
     {
         TipoLista auxLista;
         FLVazia(&auxLista);
@@ -267,19 +268,17 @@ int main(int argc, char *argv[])
     }
 
     // carregamento de dados dentro do arquivo para a a lista
-    for (int i = 0; i < k; i++)
+    for (int i = 0; i < linhas; i++)
     {
 
-        TipoItem itemLeitura;
-        while (fscanf(fp, "%d", &itemLeitura.Chave) != EOF)
-        {
+        fscanf(fp, "%d ", &numElementos);
 
+        for (int j=0;j<numElementos;j++){
+            TipoItem itemLeitura;
+            fscanf(fp, "%d", &itemLeitura.Chave);
             Insere(itemLeitura, &vecListas[i]);
-            // numElementos++;
-
-            if (fgetc(fp) == 10)
-                break; // '\n\ = 10
         }
+
     }
 
     vecListas[0].Primeiro->Item.NumElementos = numElementos;
@@ -288,7 +287,12 @@ int main(int argc, char *argv[])
     int *padrao = (int *)malloc(padraoSize * sizeof(int));
     padrao[0] = 1; padrao[1] = 3; padrao[2] = 2; padrao[3] = 3; padrao[4] = 1;
 
-    mapeamento(vecListas[0], vecListas[1]);
+
+    for(int i=0;i<linhas;i++){
+
+        mapeamento(vecListas[i], vecListas[i+linhas]);
+
+    }
 
     int tamanhoIntervalos = 0;
     TipoApontador Aux;
@@ -298,14 +302,16 @@ int main(int argc, char *argv[])
         Aux = Aux->Prox;
     }
 
-    if (buscaDePadrao(vecListas[1], tamanhoIntervalos, padrao, padraoSize))
-    {
-        printf("Resultado: Padrao encontrado.\n");
+    TipoApontador aux;
+    for (int i=0; aux->Prox != NULL;i++){
+
+        if (!i) printf("\n");
+
+        imprimePontoMedio(vecListas[i+linhas]);
     }
-    else
-    {
-        printf("Resultado: Padrao nao encontrado.\n");
-    }
+
+   // buscaDePadrao(vecListas[1], tamanhoIntervalos, padrao, padraoSize)
+  
 
     return 0;
 }
