@@ -97,12 +97,12 @@ void Imprime(TipoLista Lista)
 
 /* ========================================================================== */
 
-// func parte 1
 // retorna se foi encontrada a sequencia expecificada dentro de uma lista passada como parametro
 //  sequencia q precisa ser encontrda 1 3 2 3 1
 
-bool buscaDePadrao(TipoLista result, int tamanho, int *padrao, int padraoSize)
+int buscaDePadrao(TipoLista result, int tamanho, int *padrao, int padraoSize) // retorna a posicao do inicio do padrao + 1 para evitar o 0 de falso e bugar
 {
+    int posInicioPadrao = 0;
     TipoApontador Aux = result.Primeiro->Prox;
 
     while (Aux != NULL)
@@ -124,17 +124,19 @@ bool buscaDePadrao(TipoLista result, int tamanho, int *padrao, int padraoSize)
             }
 
             if (verificador == padraoSize)
-                return true;
+                return posInicioPadrao;
 
             Aux = backup;
         }
 
         if (Aux == NULL)
             break;
+
         Aux = Aux->Prox;
+        posInicioPadrao++;
     }
 
-    return false;
+    return 0;
 }
 
 int calculoPontoMedio(int a, int b)
@@ -167,7 +169,7 @@ int qntRepeticao(TipoApontador aux)
 1 3 2 3 1
 0 255 128 255 0
 */
-void    mapeamento(TipoLista Lista, TipoLista result)
+void mapeamento(TipoLista Lista, TipoLista result)
 {
     int repeticao, posGeral = 0;
     TipoApontador Aux;
@@ -175,7 +177,9 @@ void    mapeamento(TipoLista Lista, TipoLista result)
 
     int *cor = (int *)malloc(3 * sizeof(int));
 
-    cor[0] = 0; cor[1] = 128; cor[2] = 255;
+    cor[0] = 0;
+    cor[1] = 128;
+    cor[2] = 255;
 
     while (Aux != NULL)
     {
@@ -198,11 +202,65 @@ void    mapeamento(TipoLista Lista, TipoLista result)
                 auxItem.PontoMedio = calculoPontoMedio(posGeral, (posGeral + repeticao));
                 auxItem.NumElementos = repeticao;
                 Insere(auxItem, &result);
+                posGeral += repeticao;
             }
         }
 
         Aux = Aux->Prox;
     }
+}
+
+bool porcentagemAceitavelPadrao(TipoLista *listas, int posInicial, int qntListas, int *padrao, int padraoSize)
+{
+
+    int qntAceitos = 0;
+
+    for (int i = posInicial; i < qntListas; i++)
+    {
+
+        int tamanhoIntervalos = 0;
+        TipoApontador Aux;
+        Aux = listas[posInicial].Primeiro->Prox;
+        for (; Aux->Prox != NULL; tamanhoIntervalos++)
+            Aux = Aux->Prox;
+
+        if (buscaDePadrao(listas[i], tamanhoIntervalos, padrao, padraoSize))
+            qntAceitos++;
+    }
+
+    if (float(qntAceitos / qntListas) >= 0.7)
+        return true; // pode realizar a operacao
+
+    return false; // nao relaiza a operacao
+}
+
+int padraoDeCurva(TipoLista *listas, int posInicial, int qntListas, int *padrao, int padraoSize)
+{
+
+    for (int i = posInicial; i < qntListas*2; i++)
+    {
+
+        int tamanhoIntervalos = 0;
+        TipoApontador Aux;
+        Aux = listas[i].Primeiro->Prox;
+        for (; Aux->Prox != NULL; tamanhoIntervalos++)
+            Aux = Aux->Prox;
+
+        int pos = buscaDePadrao(listas[i], tamanhoIntervalos, padrao, padraoSize);
+
+        if (pos){//verifica se tem o padrao
+
+            TipoItem aux;
+            aux.PontoMedio = Aux->Item.PontoMedio;
+            Insere(aux,&listas[qntListas*2]);//salva todos os pontos medios aceitaveis na lista para analise    
+        }
+    }
+
+
+    //analise de variacao
+
+            
+
 }
 
 void imprimeTipo(TipoLista Lista)
@@ -255,12 +313,11 @@ int main(int argc, char *argv[])
 
     int linhas = 2, numElementos = 0;
     fscanf(fp, "%d ", &linhas);
-    
 
-    // criacao da lista, aloca o dobro para fazer a a lista de segmentos tipados 
-    TipoLista *vecListas = (TipoLista *)malloc(((linhas * 2)+ 1) * sizeof(TipoLista));
+    // criacao da lista, aloca o dobro para fazer a a lista de segmentos tipados
+    TipoLista *vecListas = (TipoLista *)malloc(((linhas * 2) + 1) * sizeof(TipoLista));
 
-    for (int i = 0; i < linhas; i++)
+    for (int i = 0; i < linhas * 2; i++)
     {
         TipoLista auxLista;
         FLVazia(&auxLista);
@@ -273,45 +330,57 @@ int main(int argc, char *argv[])
 
         fscanf(fp, "%d ", &numElementos);
 
-        for (int j=0;j<numElementos;j++){
+        for (int j = 0; j < numElementos; j++)
+        {
             TipoItem itemLeitura;
             fscanf(fp, "%d", &itemLeitura.Chave);
             Insere(itemLeitura, &vecListas[i]);
         }
-
     }
 
     vecListas[0].Primeiro->Item.NumElementos = numElementos;
 
     int padraoSize = 5;
     int *padrao = (int *)malloc(padraoSize * sizeof(int));
-    padrao[0] = 1; padrao[1] = 3; padrao[2] = 2; padrao[3] = 3; padrao[4] = 1;
+    padrao[0] = 1;
+    padrao[1] = 3;
+    padrao[2] = 2;
+    padrao[3] = 3;
+    padrao[4] = 1;
 
+    for (int i = 0; i < linhas; i++)
+        mapeamento(vecListas[i], vecListas[i + linhas]);
 
-    for(int i=0;i<linhas;i++){
+    padraoDeCurva(vecListas, linhas, linhas, padrao,padraoSize);
 
-        mapeamento(vecListas[i], vecListas[i+linhas]);
-
-    }
-
-    int tamanhoIntervalos = 0;
-    TipoApontador Aux;
-    Aux = vecListas[1].Primeiro->Prox;
-    for (; Aux->Prox != NULL; tamanhoIntervalos++)
+    for (int i = linhas; i < (linhas * 2); i++)
     {
-        Aux = Aux->Prox;
+
+        int tamanhoIntervalos = 0;
+        TipoApontador Aux;
+        Aux = vecListas[linhas].Primeiro->Prox;
+        for (; Aux->Prox != NULL; tamanhoIntervalos++)
+            Aux = Aux->Prox;
+
+        // printf("tipos [%d]: ", i);
+        // imprimeTipo(vecListas[i]);
+        // // printf ("\n");
+        // printf("posicao de inicio de padrao [%d]: ", i);
+        // printf("%d\n", buscaDePadrao(vecListas[i], tamanhoIntervalos, padrao, padraoSize));
+
+        printf("pontos medios [%d]: ",i);
+        imprimePontoMedio(vecListas[linhas]);
     }
 
-    TipoApontador aux;
-    for (int i=0; aux->Prox != NULL;i++){
+    printf("\nultima lista: ");
+    imprimePontoMedio(vecListas[linhas*2]);
 
-        if (!i) printf("\n");
 
-        imprimePontoMedio(vecListas[i+linhas]);
-    }
+    // if (!porcentagemAceitavelPadrao(vecListas,linhas,linhas,padrao,padraoSize)){
+    //     printf("Resultado: Formato da pista nao estimado.");
+    // }else if (1){
 
-   // buscaDePadrao(vecListas[1], tamanhoIntervalos, padrao, padraoSize)
-  
+    // }
 
     return 0;
 }
