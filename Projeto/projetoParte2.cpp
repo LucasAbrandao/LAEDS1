@@ -136,13 +136,10 @@ int buscaDePadrao(TipoLista result, int tamanho, int *padrao, int padraoSize) //
         posInicioPadrao++;
     }
 
-    return 0;
+    return -1;
 }
 
-int calculoPontoMedio(int a, int b)
-{
-    return (a + b) / 2;
-}
+int calculoPontoMedio(int a, int b) { return (a + b) / 2; }
 
 int qntRepeticao(TipoApontador aux)
 {
@@ -218,17 +215,17 @@ bool porcentagemAceitavelPadrao(TipoLista *listas, int posInicial, int qntListas
     for (int i = posInicial; i < qntListas; i++)
     {
 
-        int tamanhoIntervalos = 0;
+        int tamanhoIntervalos;
         TipoApontador Aux;
         Aux = listas[posInicial].Primeiro->Prox;
-        for (; Aux->Prox != NULL; tamanhoIntervalos++)
+        for (tamanhoIntervalos = 0; Aux->Prox != NULL; tamanhoIntervalos++)
             Aux = Aux->Prox;
 
-        if (buscaDePadrao(listas[i], tamanhoIntervalos, padrao, padraoSize))
+        if (buscaDePadrao(listas[i], tamanhoIntervalos, padrao, padraoSize) >= 0)
             qntAceitos++;
     }
 
-    if (float(qntAceitos / qntListas) >= 0.7)
+    if (float(qntAceitos) / float(qntListas) >= 0.7)
         return true; // pode realizar a operacao
 
     return false; // nao relaiza a operacao
@@ -237,7 +234,7 @@ bool porcentagemAceitavelPadrao(TipoLista *listas, int posInicial, int qntListas
 int padraoDeCurva(TipoLista *listas, int posInicial, int qntListas, int *padrao, int padraoSize)
 {
 
-    for (int i = posInicial; i < qntListas*2; i++)
+    for (int i = posInicial; i < qntListas * 2; i++)
     {
 
         int tamanhoIntervalos = 0;
@@ -248,19 +245,43 @@ int padraoDeCurva(TipoLista *listas, int posInicial, int qntListas, int *padrao,
 
         int pos = buscaDePadrao(listas[i], tamanhoIntervalos, padrao, padraoSize);
 
-        if (pos){//verifica se tem o padrao
+        if (pos >= 0)
+        { // verifica se tem o padrao
+
+            TipoApontador temp = listas[i].Primeiro->Prox;
+            for (int j = 0; j <= pos + 1; j++)
+            {
+                temp = temp->Prox;
+            }
 
             TipoItem aux;
-            aux.PontoMedio = Aux->Item.PontoMedio;
-            Insere(aux,&listas[qntListas*2]);//salva todos os pontos medios aceitaveis na lista para analise    
+            aux.PontoMedio = temp->Item.PontoMedio;
+
+            Insere(aux, &listas[qntListas * 2]); // salva todos os pontos medios aceitaveis na lista para analise
         }
     }
 
+    // analise de variacao  listas[qntListas * 2]
 
-    //analise de variacao
+    int num1, num2;
+    TipoApontador Aux;
+    Aux = listas[qntListas * 2].Primeiro->Prox;
+    num1 = Aux->Item.PontoMedio;
+    Aux = listas[qntListas * 2].Ultimo;
+    num2 = Aux->Item.PontoMedio;
 
-            
+    if ((num1 - num2) >= 25)
+    { // curva para direita
 
+        return 1;
+    }
+    else if ((num1 - num2) <= -25)
+    { // curva para esquerda
+
+        return 2;
+    }
+    else
+        return 3; // reto
 }
 
 void imprimeTipo(TipoLista Lista)
@@ -311,13 +332,13 @@ int main(int argc, char *argv[])
     TipoLista lista;
     FLVazia(&lista);
 
-    int linhas = 2, numElementos = 0;
+    int linhas, numElementos = 0;
     fscanf(fp, "%d ", &linhas);
 
     // criacao da lista, aloca o dobro para fazer a a lista de segmentos tipados
     TipoLista *vecListas = (TipoLista *)malloc(((linhas * 2) + 1) * sizeof(TipoLista));
 
-    for (int i = 0; i < linhas * 2; i++)
+    for (int i = 0; i < (linhas * 2) + 1; i++)
     {
         TipoLista auxLista;
         FLVazia(&auxLista);
@@ -351,8 +372,6 @@ int main(int argc, char *argv[])
     for (int i = 0; i < linhas; i++)
         mapeamento(vecListas[i], vecListas[i + linhas]);
 
-    padraoDeCurva(vecListas, linhas, linhas, padrao,padraoSize);
-
     for (int i = linhas; i < (linhas * 2); i++)
     {
 
@@ -368,19 +387,35 @@ int main(int argc, char *argv[])
         // printf("posicao de inicio de padrao [%d]: ", i);
         // printf("%d\n", buscaDePadrao(vecListas[i], tamanhoIntervalos, padrao, padraoSize));
 
-        printf("pontos medios [%d]: ",i);
-        imprimePontoMedio(vecListas[linhas]);
+        // // printf("pontos medios [%d]: ", i);
+        // imprimePontoMedio(vecListas[linhas]);
     }
 
-    printf("\nultima lista: ");
-    imprimePontoMedio(vecListas[linhas*2]);
+    // printf("\nultima lista: ");
+    // imprimePontoMedio(vecListas[linhas * 2]);
 
+    if (porcentagemAceitavelPadrao(vecListas, linhas, linhas, padrao, padraoSize))
+    {
+        printf("Resultado: Formato da pista nao estimado.");
+    }
+    else
+    {
+        switch (padraoDeCurva(vecListas, linhas, linhas, padrao, padraoSize))
+        {
+        case 1: // direita
+            printf("Resultado: Curva a direita.");
+            break;
+        case 2: // esquerda
+            printf("Resultado: Curva a esquerda.");
+            break;
+        case 3: // reta
+            printf("Resultado: Pista em linha reta.");
+            break;
 
-    // if (!porcentagemAceitavelPadrao(vecListas,linhas,linhas,padrao,padraoSize)){
-    //     printf("Resultado: Formato da pista nao estimado.");
-    // }else if (1){
-
-    // }
+        default:
+            break;
+        }
+    }
 
     return 0;
 }
