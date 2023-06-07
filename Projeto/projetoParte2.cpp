@@ -225,7 +225,7 @@ bool porcentagemAceitavelPadrao(TipoLista *listas, int posInicial, int qntListas
             qntAceitos++;
     }
 
-    if (float(qntAceitos) / float(qntListas) >= 0.7)
+    if (float(qntAceitos) / float(qntListas) >= 0.7) 
         return true; // pode realizar a operacao
 
     return false; // nao relaiza a operacao
@@ -261,15 +261,26 @@ int padraoDeCurva(TipoLista *listas, int posInicial, int qntListas, int *padrao,
         }
     }
 
-    // analise de variacao  listas[qntListas * 2]
+    // analise de variacao  listas[qntListas * 2] (lista de pontos medios)
 
-    int num1, num2;
+    int num1 = 0;
+    int num2 = 0;
     TipoApontador Aux;
     Aux = listas[qntListas * 2].Primeiro->Prox;
-    num1 = Aux->Item.PontoMedio;
+    if(Aux != NULL)
+        num1 = Aux->Item.PontoMedio;
+    else{ // padra nao encontrado
+        return 4;
+    }
+    
     Aux = listas[qntListas * 2].Ultimo;
-    num2 = Aux->Item.PontoMedio;
-
+    if(Aux != NULL)
+        num2 = Aux->Item.PontoMedio;
+    else{ // padra nao encontrado
+        return 4;
+    }
+    
+        
     if ((num1 - num2) >= 25)
     { // curva para direita
 
@@ -411,7 +422,10 @@ int main(int argc, char *argv[])
         case 3: // reta
             printf("Resultado: Pista em linha reta.");
             break;
-
+        case 4: // erro na análise da pista
+            printf("Resultado: Formato da pista nao estimado.");
+            break;
+            
         default:
             break;
         }
